@@ -149,7 +149,7 @@ export default function LoginForm() {
 
 						<div className="mt-6 text-center text-sm">
 							<span className="text-muted-foreground">
-								Don`&apos;`t have an account?{" "}
+								Don&apos;t have an account?{" "}
 							</span>
 							<Link
 								href="/register"
