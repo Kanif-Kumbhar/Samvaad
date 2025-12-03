@@ -1,50 +1,61 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+const handleResponse = async (res: Response) => {
+	const contentType = res.headers.get("content-type");
+
+	if (contentType && contentType.includes("application/json")) {
+		return res.json();
+	}
+
+	const text = await res.text();
+	return { error: text };
+};
+
 export const api = {
 	login: async (email: string, password: string) => {
-		const res = await fetch(`${API_URL}/auth/login`, {
+		const res = await fetch(`${API_URL}/api/auth/login`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ email, password }),
 		});
-		return res.json();
+		return handleResponse(res);
 	},
 
 	register: async (username: string, email: string, password: string) => {
-		const res = await fetch(`${API_URL}/auth/register`, {
+		const res = await fetch(`${API_URL}/api/auth/register`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ username, email, password }),
 		});
-		return res.json();
+		return handleResponse(res);
 	},
 
 	getConversations: async (token: string) => {
-		const res = await fetch(`${API_URL}/conversations`, {
+		const res = await fetch(`${API_URL}/api/conversations`, {
 			headers: { Authorization: `Bearer ${token}` },
 		});
-		return res.json();
+		return handleResponse(res);
 	},
 
 	getMessages: async (conversationId: string, token: string, page = 1) => {
 		const res = await fetch(
-			`${API_URL}/messages/${conversationId}?page=${page}&limit=50`,
+			`${API_URL}/api/messages/${conversationId}?page=${page}&limit=50`,
 			{
 				headers: { Authorization: `Bearer ${token}` },
 			}
 		);
-		return res.json();
+		return handleResponse(res);
 	},
 
 	searchUsers: async (query: string, token: string) => {
-		const res = await fetch(`${API_URL}/users/search?q=${query}`, {
+		const res = await fetch(`${API_URL}/api/users/search?q=${query}`, {
 			headers: { Authorization: `Bearer ${token}` },
 		});
-		return res.json();
+		return handleResponse(res);
 	},
 
 	createConversation: async (participantId: string, token: string) => {
-		const res = await fetch(`${API_URL}/conversations`, {
+		const res = await fetch(`${API_URL}/api/conversations`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -52,6 +63,6 @@ export const api = {
 			},
 			body: JSON.stringify({ participantId }),
 		});
-		return res.json();
+		return handleResponse(res);
 	},
 };
