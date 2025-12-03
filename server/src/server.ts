@@ -11,6 +11,7 @@ import conversationRoutes from "./routes/conversation.routes";
 import messageRoutes from "./routes/message.routes";
 import userRoutes from "./routes/user.routes";
 import uploadRoutes from "./routes/upload.routes";
+import groupRoutes from "./routes/group.routes";
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/groups", groupRoutes);
 
 app.use(
 	(

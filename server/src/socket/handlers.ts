@@ -33,23 +33,36 @@ export const setupMessageHandlers = (io: SocketServer, socket: Socket) => {
 					return;
 				}
 
-				const otherParticipant = await prisma.participant.findFirst({
-					where: {
-						conversationId,
-						userId: { not: userId },
+				// Get conversation details
+				const conversation = await prisma.conversation.findUnique({
+					where: { id: conversationId },
+					include: {
+						participants: {
+							select: { userId: true },
+						},
 					},
 				});
 
-				if (!otherParticipant) {
+				if (!conversation) {
 					socket.emit("error", { message: "Conversation not found" });
 					return;
 				}
 
+				// For groups, receiverId is null. For 1-on-1, get other participant
+				let receiverId = null;
+				if (!conversation.isGroup) {
+					const otherParticipant = conversation.participants.find(
+						(p) => p.userId !== userId
+					);
+					receiverId = otherParticipant?.userId || null;
+				}
+
+				// Create message
 				const message = await prisma.message.create({
 					data: {
 						content,
 						senderId: userId,
-						receiverId: otherParticipant.userId,
+						receiverId,
 						conversationId,
 						status: "SENT",
 						attachmentUrl: attachmentUrl || null,
@@ -67,33 +80,44 @@ export const setupMessageHandlers = (io: SocketServer, socket: Socket) => {
 					},
 				});
 
+				// Update conversation timestamp
 				await prisma.conversation.update({
 					where: { id: conversationId },
 					data: { updatedAt: new Date() },
 				});
 
-				await prisma.participant.update({
-					where: { id: otherParticipant.id },
-					data: { unreadCount: { increment: 1 } },
+				// Increment unread count for all participants except sender
+				await prisma.participant.updateMany({
+					where: {
+						conversationId,
+						userId: { not: userId },
+					},
+					data: {
+						unreadCount: { increment: 1 },
+					},
 				});
 
+				// Emit to all clients
 				io.emit("message:new", message);
 
-				const receiver = await prisma.user.findUnique({
-					where: { id: otherParticipant.userId },
-					select: { isOnline: true },
-				});
-
-				if (receiver?.isOnline) {
-					await prisma.message.update({
-						where: { id: message.id },
-						data: { status: "DELIVERED" },
+				// For 1-on-1 chats, update delivery status
+				if (!conversation.isGroup && receiverId) {
+					const receiver = await prisma.user.findUnique({
+						where: { id: receiverId },
+						select: { isOnline: true },
 					});
 
-					io.emit("message:status", {
-						messageId: message.id,
-						status: "DELIVERED",
-					});
+					if (receiver?.isOnline) {
+						await prisma.message.update({
+							where: { id: message.id },
+							data: { status: "DELIVERED" },
+						});
+
+						io.emit("message:status", {
+							messageId: message.id,
+							status: "DELIVERED",
+						});
+					}
 				}
 			} catch (error) {
 				console.error("Send message error:", error);

@@ -1,17 +1,17 @@
 export interface User {
-  id: string;
-  username: string;
-  email: string;
-  avatar?: string;
-  isOnline: boolean;
-  lastSeen?: Date;
+	id: string;
+	username: string;
+	email: string;
+	avatar?: string;
+	isOnline: boolean;
+	lastSeen?: Date;
 }
 
 export interface Message {
 	id: string;
 	content: string;
 	senderId: string;
-	receiverId: string;
+	receiverId?: string | null;
 	conversationId: string;
 	status: "SENT" | "DELIVERED" | "SEEN";
 	attachmentUrl?: string;
@@ -21,19 +21,30 @@ export interface Message {
 	updatedAt: Date;
 }
 
+export interface Participant {
+	id: string;
+	userId: string;
+	role: "ADMIN" | "MEMBER";
+	user: User;
+}
+
 export interface Conversation {
-  id: string;
-  participants: User[];
-  lastMessage?: Message;
-  unreadCount: number;
-  isPinned: boolean;
-  isArchived: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+	id: string;
+	isGroup: boolean;
+	groupName?: string;
+	groupAvatar?: string;
+	creatorId?: string;
+	participants: User[];
+	lastMessage?: Message;
+	unreadCount: number;
+	isPinned: boolean;
+	isArchived: boolean;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface TypingData {
-  userId: string;
-  conversationId: string;
-  isTyping: boolean;
+	userId: string;
+	conversationId: string;
+	isTyping: boolean;
 }
