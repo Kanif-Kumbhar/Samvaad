@@ -29,6 +29,8 @@ export const initializeSocket = (httpServer: HttpServer) => {
 				data: { isOnline: true },
 			});
 
+			io.emit("user:status", { userId: decoded.userId, isOnline: true });
+
 			next();
 		} catch (error) {
 			next(new Error("Authentication error: Invalid token"));
@@ -36,12 +38,12 @@ export const initializeSocket = (httpServer: HttpServer) => {
 	});
 
 	io.on("connection", (socket) => {
-		console.log(`User connected: ${socket.data.userId}`);
+		console.log(`✅ User connected: ${socket.data.userId}`);
 
 		setupMessageHandlers(io, socket);
 
 		socket.on("disconnect", async () => {
-			console.log(`User disconnected: ${socket.data.userId}`);
+			console.log(`❌ User disconnected: ${socket.data.userId}`);
 
 			await prisma.user.update({
 				where: { id: socket.data.userId },
@@ -50,6 +52,8 @@ export const initializeSocket = (httpServer: HttpServer) => {
 					lastSeen: new Date(),
 				},
 			});
+
+			io.emit("user:status", { userId: socket.data.userId, isOnline: false });
 		});
 	});
 

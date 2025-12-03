@@ -1,23 +1,40 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-export default function TypingIndicator() {
+interface Props {
+	username?: string;
+}
+
+export default function TypingIndicator({ username }: Props) {
 	return (
-		<AnimatePresence>
-			<motion.div
-				initial={{ opacity: 0, y: 4 }}
-				animate={{ opacity: 1, y: 0 }}
-				exit={{ opacity: 0, y: 4 }}
-				className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-800/80 text-[10px] text-slate-200"
-			>
-				<span className="flex gap-0.5">
-					<span className="w-1 h-1 rounded-full bg-slate-200 animate-bounce [animation-delay:-0.2s]" />
-					<span className="w-1 h-1 rounded-full bg-slate-200 animate-bounce [animation-delay:-0.1s]" />
-					<span className="w-1 h-1 rounded-full bg-slate-200 animate-bounce" />
-				</span>
-				<span>Typing...</span>
-			</motion.div>
-		</AnimatePresence>
+		<motion.div
+			initial={{ opacity: 0, y: 10, scale: 0.9 }}
+			animate={{ opacity: 1, y: 0, scale: 1 }}
+			exit={{ opacity: 0, y: 10, scale: 0.9 }}
+			className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl rounded-bl-md bg-slate-800/80 border border-slate-700/50 shadow-lg backdrop-blur-sm"
+		>
+			<div className="flex gap-1">
+				{[0, 1, 2].map((i) => (
+					<motion.span
+						key={i}
+						animate={{
+							y: [0, -8, 0],
+							opacity: [0.5, 1, 0.5],
+						}}
+						transition={{
+							duration: 1,
+							repeat: Infinity,
+							delay: i * 0.15,
+							ease: "easeInOut",
+						}}
+						className="w-2 h-2 rounded-full bg-slate-400"
+					/>
+				))}
+			</div>
+			<span className="text-xs text-slate-400 font-medium">
+				{username || "Someone"} is typing
+			</span>
+		</motion.div>
 	);
 }

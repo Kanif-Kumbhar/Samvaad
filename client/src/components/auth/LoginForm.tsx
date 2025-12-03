@@ -50,14 +50,25 @@ export default function LoginForm() {
 
 			if (response.error) {
 				setError(response.error);
+				setIsLoading(false);
+				return;
+			}
+
+			if (!response.user || !response.token) {
+				setError("Invalid response from server");
+				setIsLoading(false);
 				return;
 			}
 
 			setAuth(response.user, response.token);
-			router.push("/");
+
+			setTimeout(() => {
+				router.push("/");
+				router.refresh();
+			}, 100);
 		} catch (err) {
-			setError("An error occurred. Please try again." + err,);
-		} finally {
+			console.error("Login error:", err);
+			setError("An error occurred. Please try again.");
 			setIsLoading(false);
 		}
 	};
@@ -105,6 +116,7 @@ export default function LoginForm() {
 									placeholder="you@example.com"
 									{...register("email")}
 									className="h-11"
+									disabled={isLoading}
 								/>
 								{errors.email && (
 									<p className="text-sm text-destructive">
@@ -123,6 +135,7 @@ export default function LoginForm() {
 									placeholder="••••••••"
 									{...register("password")}
 									className="h-11"
+									disabled={isLoading}
 								/>
 								{errors.password && (
 									<p className="text-sm text-destructive">

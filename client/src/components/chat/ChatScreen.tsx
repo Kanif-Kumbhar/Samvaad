@@ -11,7 +11,7 @@ import MessageInput from "./MessageInput";
 import TypingIndicator from "./TypingIndicator";
 import { Message } from "@/types";
 import { Loader2 } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Props {
 	conversationId: string;
@@ -23,6 +23,7 @@ export default function ChatScreen({ conversationId }: Props) {
 	const [loading, setLoading] = useState(true);
 	const [page] = useState(1);
 	const scrollRef = useRef<HTMLDivElement | null>(null);
+	const lastMessageRef = useRef<HTMLDivElement | null>(null);
 
 	useSocket();
 
@@ -46,10 +47,8 @@ export default function ChatScreen({ conversationId }: Props) {
 			setLoading(false);
 
 			setTimeout(() => {
-				if (scrollRef.current) {
-					scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-				}
-			}, 50);
+				lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
+			}, 100);
 		};
 
 		fetchMessages();
@@ -59,8 +58,10 @@ export default function ChatScreen({ conversationId }: Props) {
 	const messageCount = currentMessages?.length || 0;
 
 	useEffect(() => {
-		if (scrollRef.current) {
-			scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+		if (messageCount > 0) {
+			setTimeout(() => {
+				lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
+			}, 100);
 		}
 	}, [messageCount]);
 
@@ -70,39 +71,91 @@ export default function ChatScreen({ conversationId }: Props) {
 
 	if (!conversation || !user) {
 		return (
-			<div className="flex-1 flex items-center justify-center bg-slate-950 text-slate-100">
-				<p className="text-sm text-muted-foreground">
-					Select a conversation to start chatting.
+			<div className="flex-1 flex items-center justify-center bg-slate-950">
+				<p className="text-sm text-slate-400">
+					Select a conversation to start chatting
 				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex-1 flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50">
+		<div className="flex-1 flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+			{/* Animated Background Pattern */}
+			<div className="absolute inset-0 opacity-5">
+				<div
+					className="absolute inset-0"
+					style={{
+						backgroundImage: `radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                           radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.2) 0%, transparent 50%)`,
+					}}
+				/>
+			</div>
+
 			<ChatHeader conversation={conversation} otherUser={otherUser} />
 
+			{/* Messages Container */}
 			<div
 				ref={scrollRef}
-				className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3 flex flex-col space-y-1"
+				className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 relative z-10"
 			>
 				{loading ? (
-					<div className="flex-1 flex items-center justify-center">
-						<Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+					<div className="flex-1 flex items-center justify-center h-full">
+						<motion.div
+							initial={{ opacity: 0, scale: 0.8 }}
+							animate={{ opacity: 1, scale: 1 }}
+							className="flex flex-col items-center gap-3"
+						>
+							<Loader2 className="w-8 h-8 animate-spin text-primary" />
+							<p className="text-sm text-slate-400">Loading messages...</p>
+						</motion.div>
 					</div>
 				) : (
-					<>
-						<AnimatePresence initial={false}>
-							{currentMessages?.map((m) => (
-								<MessageBubble key={m.id} message={m} />
-							))}
-						</AnimatePresence>
-						{showTyping && (
-							<div className="mt-2 flex justify-start">
-								<TypingIndicator />
-							</div>
+					<div className="space-y-2">
+						{currentMessages?.length === 0 ? (
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="flex flex-col items-center justify-center h-full py-20"
+							>
+								<div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
+									<span className="text-4xl">👋</span>
+								</div>
+								<p className="text-lg font-semibold text-slate-300 mb-2">
+									Start the conversation
+								</p>
+								<p className="text-sm text-slate-500">
+									Send a message to {otherUser?.username}
+								</p>
+							</motion.div>
+						) : (
+							<AnimatePresence initial={false}>
+								{currentMessages?.map((m, index) => (
+									<MessageBubble
+										key={m.id}
+										message={m}
+										isLast={index === currentMessages.length - 1}
+										ref={
+											index === currentMessages.length - 1
+												? lastMessageRef
+												: null
+										}
+									/>
+								))}
+							</AnimatePresence>
 						)}
-					</>
+
+						{showTyping && (
+							<motion.div
+								initial={{ opacity: 0, y: 10 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: 10 }}
+								className="flex justify-start"
+							>
+								<TypingIndicator username={otherUser?.username} />
+							</motion.div>
+						)}
+					</div>
 				)}
 			</div>
 

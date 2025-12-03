@@ -5,10 +5,18 @@ import { initSocket, getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
 import { Message, TypingData } from "@/types";
+import { useNotificationSound } from "./useNotificationSound";
 
 export function useSocket() {
-	const { token } = useAuthStore();
-	const { addMessage, setTyping, updateMessageStatus } = useChatStore();
+	const { token, user } = useAuthStore();
+	const {
+		addMessage,
+		setTyping,
+		updateMessageStatus,
+		conversations,
+		setConversations,
+	} = useChatStore();
+	const { play } = useNotificationSound();
 
 	useEffect(() => {
 		if (!token) return;
@@ -16,6 +24,10 @@ export function useSocket() {
 
 		socket.on("message:new", (message: Message) => {
 			addMessage(message.conversationId, message);
+
+			if (message.senderId !== user?.id) {
+				play();
+			}
 		});
 
 		socket.on(
@@ -35,10 +47,31 @@ export function useSocket() {
 			setTyping(data.conversationId, data.userId, data.isTyping);
 		});
 
+		socket.on("user:status", (data: { userId: string; isOnline: boolean }) => {
+			setConversations(
+				conversations.map((conv) => ({
+					...conv,
+					participants: conv.participants.map((p) =>
+						p.id === data.userId ? { ...p, isOnline: data.isOnline } : p
+					),
+				}))
+			);
+		});
+
 		return () => {
 			getSocket()?.off("message:new");
 			getSocket()?.off("message:status");
 			getSocket()?.off("typing");
+			getSocket()?.off("user:status");
 		};
-	}, [token, addMessage, setTyping, updateMessageStatus]);
+	}, [
+		token,
+		addMessage,
+		setTyping,
+		updateMessageStatus,
+		user,
+		play,
+		conversations,
+		setConversations,
+	]);
 }

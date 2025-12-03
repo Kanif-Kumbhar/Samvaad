@@ -8,14 +8,14 @@ export interface User {
 }
 
 export interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  receiverId: string;
-  conversationId: string;
-  status: 'sent' | 'delivered' | 'seen';
-  createdAt: Date;
-  updatedAt: Date;
+	id: string;
+	content: string;
+	senderId: string;
+	receiverId: string;
+	conversationId: string;
+	status: "SENT" | "DELIVERED" | "SEEN";
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface Conversation {
