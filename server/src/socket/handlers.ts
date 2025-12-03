@@ -4,12 +4,26 @@ import prisma from "../config/prisma";
 export const setupMessageHandlers = (io: SocketServer, socket: Socket) => {
 	const userId = socket.data.userId;
 
+	// Send message (with attachment support)
 	socket.on(
 		"message:send",
-		async (data: { conversationId: string; content: string }) => {
+		async (data: {
+			conversationId: string;
+			content: string;
+			attachmentUrl?: string;
+			attachmentType?: string;
+			attachmentName?: string;
+		}) => {
 			try {
-				const { conversationId, content } = data;
+				const {
+					conversationId,
+					content,
+					attachmentUrl,
+					attachmentType,
+					attachmentName,
+				} = data;
 
+				// Verify user is part of conversation
 				const participant = await prisma.participant.findFirst({
 					where: { userId, conversationId },
 				});
@@ -38,6 +52,9 @@ export const setupMessageHandlers = (io: SocketServer, socket: Socket) => {
 						receiverId: otherParticipant.userId,
 						conversationId,
 						status: "SENT",
+						attachmentUrl: attachmentUrl || null,
+						attachmentType: attachmentType || null,
+						attachmentName: attachmentName || null,
 					},
 					include: {
 						sender: {

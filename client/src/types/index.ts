@@ -14,6 +14,9 @@ export interface Message {
 	receiverId: string;
 	conversationId: string;
 	status: "SENT" | "DELIVERED" | "SEEN";
+	attachmentUrl?: string;
+	attachmentType?: "image" | "file" | "audio" | "video";
+	attachmentName?: string;
 	createdAt: Date;
 	updatedAt: Date;
 }

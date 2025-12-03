@@ -73,4 +73,38 @@ export const api = {
 		});
 		return handleResponse(res);
 	},
+
+	togglePinConversation: async (conversationId: string, token: string) => {
+		const res = await fetch(
+			`${API_URL}/api/conversations/${conversationId}/pin`,
+			{
+				method: "PATCH",
+				headers: { Authorization: `Bearer ${token}` },
+			}
+		);
+		return handleResponse(res);
+	},
+
+	toggleArchiveConversation: async (conversationId: string, token: string) => {
+		const res = await fetch(
+			`${API_URL}/api/conversations/${conversationId}/archive`,
+			{
+				method: "PATCH",
+				headers: { Authorization: `Bearer ${token}` },
+			}
+		);
+		return handleResponse(res);
+	},
+
+	getUploadSignature: async (token: string) => {
+		const res = await fetch(`${API_URL}/api/upload/signature`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({ folder: "chat-uploads" }),
+		});
+		return handleResponse(res);
+	},
 };

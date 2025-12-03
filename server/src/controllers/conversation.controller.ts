@@ -73,7 +73,6 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
 				.json({ error: "Cannot create conversation with yourself" });
 		}
 
-		// Check if conversation already exists
 		const existingConversation = await prisma.conversation.findFirst({
 			where: {
 				participants: {
@@ -114,7 +113,6 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
 			return res.json({ conversation: formattedConversation });
 		}
 
-		// Create new conversation
 		const conversation = await prisma.conversation.create({
 			data: {
 				participants: {
@@ -153,6 +151,77 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
 		res.status(201).json({ conversation: formattedConversation });
 	} catch (error) {
 		console.error("Create conversation error:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const togglePinConversation = async (
+	req: AuthRequest,
+	res: Response
+) => {
+	try {
+		const userId = req.userId!;
+		const { conversationId } = req.params;
+		const participant = await prisma.participant.findFirst({
+			where: { userId, conversationId },
+		});
+
+		if (!participant) {
+			return res.status(403).json({ error: "Not authorized" });
+		}
+
+		const conversation = await prisma.conversation.update({
+			where: { id: conversationId },
+			data: {
+				isPinned: {
+					set: !(
+						await prisma.conversation.findUnique({
+							where: { id: conversationId },
+						})
+					)?.isPinned,
+				},
+			},
+		});
+
+		res.json({ success: true, isPinned: conversation.isPinned });
+	} catch (error) {
+		console.error("Toggle pin error:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const toggleArchiveConversation = async (
+	req: AuthRequest,
+	res: Response
+) => {
+	try {
+		const userId = req.userId!;
+		const { conversationId } = req.params;
+
+		const participant = await prisma.participant.findFirst({
+			where: { userId, conversationId },
+		});
+
+		if (!participant) {
+			return res.status(403).json({ error: "Not authorized" });
+		}
+
+		const conversation = await prisma.conversation.update({
+			where: { id: conversationId },
+			data: {
+				isArchived: {
+					set: !(
+						await prisma.conversation.findUnique({
+							where: { id: conversationId },
+						})
+					)?.isArchived,
+				},
+			},
+		});
+
+		res.json({ success: true, isArchived: conversation.isArchived });
+	} catch (error) {
+		console.error("Toggle archive error:", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };

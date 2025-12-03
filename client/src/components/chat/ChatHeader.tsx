@@ -4,17 +4,32 @@ import { useEffect, useState } from "react";
 import { Conversation, User } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Phone, Video, MoreVertical } from "lucide-react";
+import { Phone, Video, MoreVertical, Pin, Archive, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSocket } from "@/lib/socket";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuthStore } from "@/store/authStore";
+import { useChatStore } from "@/store/chatStore";
+import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function ChatHeader({
+	conversation,
 	otherUser: initialUser,
 }: {
 	conversation: Conversation;
 	otherUser: User | null;
 }) {
 	const [otherUser, setOtherUser] = useState(initialUser);
+	const { token } = useAuthStore();
+	const { updateConversation } = useChatStore();
+	const router = useRouter();
 
 	useEffect(() => {
 		if (!initialUser) return;
@@ -40,6 +55,23 @@ export default function ChatHeader({
 		};
 	}, [initialUser]);
 
+	const handleTogglePin = async () => {
+		if (!token) return;
+		const result = await api.togglePinConversation(conversation.id, token);
+		if (result.success) {
+			updateConversation(conversation.id, { isPinned: result.isPinned });
+		}
+	};
+
+	const handleToggleArchive = async () => {
+		if (!token) return;
+		const result = await api.toggleArchiveConversation(conversation.id, token);
+		if (result.success) {
+			updateConversation(conversation.id, { isArchived: result.isArchived });
+			router.push("/");
+		}
+	};
+
 	if (!otherUser) return null;
 
 	return (
@@ -57,7 +89,6 @@ export default function ChatHeader({
 						</AvatarFallback>
 					</Avatar>
 
-					{/* Online Status Dot */}
 					<AnimatePresence>
 						{otherUser.isOnline && (
 							<motion.div
@@ -75,7 +106,6 @@ export default function ChatHeader({
 						{otherUser.username}
 					</span>
 
-					{/* Status Text with Animation */}
 					<AnimatePresence mode="wait">
 						{otherUser.isOnline ? (
 							<motion.span
@@ -119,13 +149,34 @@ export default function ChatHeader({
 				>
 					<Video className="w-4 h-4" />
 				</Button>
-				<Button
-					size="icon"
-					variant="ghost"
-					className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 h-9 w-9"
-				>
-					<MoreVertical className="w-4 h-4" />
-				</Button>
+
+				{/* More Options Dropdown */}
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							size="icon"
+							variant="ghost"
+							className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 h-9 w-9"
+						>
+							<MoreVertical className="w-4 h-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-48">
+						<DropdownMenuItem onClick={handleTogglePin}>
+							<Pin className="w-4 h-4 mr-2" />
+							{conversation.isPinned ? "Unpin" : "Pin"} Conversation
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={handleToggleArchive}>
+							<Archive className="w-4 h-4 mr-2" />
+							{conversation.isArchived ? "Unarchive" : "Archive"} Chat
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem className="text-red-600">
+							<Trash2 className="w-4 h-4 mr-2" />
+							Delete Conversation
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 		</motion.header>
 	);
