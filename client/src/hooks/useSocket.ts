@@ -11,6 +11,7 @@ export function useSocket() {
 	const { token, user } = useAuthStore();
 	const {
 		addMessage,
+		deleteMessage,
 		setTyping,
 		updateMessageStatus,
 		conversations,
@@ -29,6 +30,13 @@ export function useSocket() {
 				play();
 			}
 		});
+
+		socket.on(
+			"message:deleted",
+			(data: { messageId: string; conversationId: string }) => {
+				deleteMessage(data.conversationId, data.messageId);
+			}
+		);
 
 		socket.on(
 			"message:status",
@@ -60,6 +68,7 @@ export function useSocket() {
 
 		return () => {
 			getSocket()?.off("message:new");
+			getSocket()?.off("message:deleted");
 			getSocket()?.off("message:status");
 			getSocket()?.off("typing");
 			getSocket()?.off("user:status");
@@ -67,6 +76,7 @@ export function useSocket() {
 	}, [
 		token,
 		addMessage,
+		deleteMessage,
 		setTyping,
 		updateMessageStatus,
 		user,

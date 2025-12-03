@@ -115,4 +115,33 @@ export const setupMessageHandlers = (io: SocketServer, socket: Socket) => {
 			console.error("Message seen error:", error);
 		}
 	});
+
+	socket.on("message:delete", async (data: { messageId: string }) => {
+		try {
+			const { messageId } = data;
+
+			const message = await prisma.message.findUnique({
+				where: { id: messageId },
+			});
+
+			if (!message || message.senderId !== userId) {
+				socket.emit("error", {
+					message: "Not authorized to delete this message",
+				});
+				return;
+			}
+
+			await prisma.message.delete({
+				where: { id: messageId },
+			});
+
+			io.emit("message:deleted", {
+				messageId,
+				conversationId: message.conversationId,
+			});
+		} catch (error) {
+			console.error("Delete message error:", error);
+			socket.emit("error", { message: "Failed to delete message" });
+		}
+	});
 };

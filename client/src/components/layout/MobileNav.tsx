@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+	Sheet,
+	SheetContent,
+	SheetTrigger,
+	SheetTitle,
+	SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 
 export default function MobileNav() {
 	const [open, setOpen] = useState(false);
@@ -17,6 +24,7 @@ export default function MobileNav() {
 				</div>
 				<span className="font-semibold text-sm">ChatApp</span>
 			</div>
+
 			<Sheet open={open} onOpenChange={setOpen}>
 				<SheetTrigger asChild>
 					<Button size="icon" variant="ghost" className="md:hidden">
@@ -24,6 +32,15 @@ export default function MobileNav() {
 					</Button>
 				</SheetTrigger>
 				<SheetContent side="left" className="p-0 w-[280px]">
+					{/* Visually hidden but accessible to screen readers */}
+					<VisuallyHidden>
+						<SheetTitle>Navigation Menu</SheetTitle>
+						<SheetDescription>
+							Access your conversations, search for users, and manage your chats
+						</SheetDescription>
+					</VisuallyHidden>
+
+					{/* Actual visible content */}
 					<Sidebar />
 				</SheetContent>
 			</Sheet>

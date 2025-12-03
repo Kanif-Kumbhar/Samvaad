@@ -65,4 +65,12 @@ export const api = {
 		});
 		return handleResponse(res);
 	},
+
+	deleteMessage: async (messageId: string, token: string) => {
+		const res = await fetch(`${API_URL}/api/messages/${messageId}`, {
+			method: "DELETE",
+			headers: { Authorization: `Bearer ${token}` },
+		});
+		return handleResponse(res);
+	},
 };

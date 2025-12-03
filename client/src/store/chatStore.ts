@@ -11,6 +11,7 @@ interface ChatState {
 	addConversation: (conversation: Conversation) => void;
 	setMessages: (conversationId: string, messages: Message[]) => void;
 	addMessage: (conversationId: string, message: Message) => void;
+	deleteMessage: (conversationId: string, messageId: string) => void;
 	setActiveConversation: (id: string | null) => void;
 	setTyping: (
 		conversationId: string,
@@ -41,6 +42,16 @@ export const useChatStore = create<ChatState>((set) => ({
 			messages: {
 				...state.messages,
 				[conversationId]: [...(state.messages[conversationId] || []), message],
+			},
+		})),
+
+	deleteMessage: (conversationId, messageId) =>
+		set((state) => ({
+			messages: {
+				...state.messages,
+				[conversationId]: (state.messages[conversationId] || []).filter(
+					(m) => m.id !== messageId
+				),
 			},
 		})),
 

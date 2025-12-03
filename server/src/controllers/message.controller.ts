@@ -10,7 +10,6 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 		const limit = parseInt(req.query.limit as string) || 50;
 		const skip = (page - 1) * limit;
 
-		// Verify user is part of conversation
 		const participant = await prisma.participant.findFirst({
 			where: {
 				userId,
@@ -24,7 +23,6 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 				.json({ error: "Not authorized to view this conversation" });
 		}
 
-		// Fetch messages with pagination
 		const messages = await prisma.message.findMany({
 			where: { conversationId },
 			orderBy: { createdAt: "asc" },
@@ -45,7 +43,6 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 			where: { conversationId },
 		});
 
-		// Mark messages as delivered/seen
 		await prisma.message.updateMany({
 			where: {
 				conversationId,
@@ -55,7 +52,6 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 			data: { status: "SEEN" },
 		});
 
-		// Reset unread count
 		await prisma.participant.update({
 			where: { id: participant.id },
 			data: { unreadCount: 0 },
@@ -72,6 +68,36 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 		});
 	} catch (error) {
 		console.error("Get messages error:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const deleteMessage = async (req: AuthRequest, res: Response) => {
+	try {
+		const userId = req.userId!;
+		const { messageId } = req.params;
+
+		const message = await prisma.message.findUnique({
+			where: { id: messageId },
+		});
+
+		if (!message) {
+			return res.status(404).json({ error: "Message not found" });
+		}
+
+		if (message.senderId !== userId) {
+			return res
+				.status(403)
+				.json({ error: "Not authorized to delete this message" });
+		}
+
+		await prisma.message.delete({
+			where: { id: messageId },
+		});
+
+		res.json({ success: true, messageId });
+	} catch (error) {
+		console.error("Delete message error:", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };

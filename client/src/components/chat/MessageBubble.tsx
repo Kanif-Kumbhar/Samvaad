@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
 import { cn, formatMessageTime } from "@/lib/utils";
 import { Check, CheckCheck, Trash2 } from "lucide-react";
+import { getSocket } from "@/lib/socket";
 
 interface Props {
 	message: Message;
@@ -28,11 +29,15 @@ const MessageBubble = forwardRef<HTMLDivElement, Props>(
 			info: PanInfo
 		) => {
 			if (info.offset.x < -100) {
-				setIsDeleting(true);
-				// TODO: Call delete API
-				setTimeout(() => {
-					// Handle delete
-				}, 300);
+				handleDelete();
+			}
+		};
+
+		const handleDelete = () => {
+			setIsDeleting(true);
+			const socket = getSocket();
+			if (socket) {
+				socket.emit("message:delete", { messageId: message.id });
 			}
 		};
 
@@ -45,9 +50,9 @@ const MessageBubble = forwardRef<HTMLDivElement, Props>(
 					opacity: isDeleting ? 0 : 1,
 					y: 0,
 					scale: 1,
-					x: isDeleting ? -200 : 0,
+					x: isDeleting ? (isMe ? 200 : -200) : 0,
 				}}
-				exit={{ opacity: 0, scale: 0.9, x: -100 }}
+				exit={{ opacity: 0, scale: 0.9, x: isMe ? 200 : -200 }}
 				transition={{
 					type: "spring",
 					stiffness: 500,
@@ -74,7 +79,7 @@ const MessageBubble = forwardRef<HTMLDivElement, Props>(
 					dragConstraints={{ left: -120, right: 0 }}
 					dragElastic={0.2}
 					onDragEnd={handleDragEnd}
-					style={{ x, opacity }}
+					style={{ x: isMe ? x : 0, opacity }}
 					whileHover={{ scale: 1.02 }}
 					className={cn(
 						"group relative max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-2.5 shadow-lg transition-all",
@@ -122,7 +127,7 @@ const MessageBubble = forwardRef<HTMLDivElement, Props>(
 							initial={{ opacity: 0, scale: 0 }}
 							whileHover={{ scale: 1.1 }}
 							className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 bg-red-500/20 hover:bg-red-500/30 rounded-full flex items-center justify-center"
-							onClick={() => setIsDeleting(true)}
+							onClick={handleDelete}
 						>
 							<Trash2 className="w-4 h-4 text-red-400" />
 						</motion.button>
