@@ -1,9 +1,3 @@
-Here is the **clean, professional, ready-to-paste README.md code** — no explanations, no extra text.
-Just copy–paste into your `README.md` ✔️
-
----
-
-# ✅ **READY-TO-PASTE README.md**
 
 ````markdown
 <div align="center">
