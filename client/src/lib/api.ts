@@ -107,4 +107,89 @@ export const api = {
 		});
 		return handleResponse(res);
 	},
+
+	createGroup: async (
+		data: { groupName: string; participantIds: string[]; groupAvatar?: string },
+		token: string
+	) => {
+		const res = await fetch(`${API_URL}/api/groups`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify(data),
+		});
+		return handleResponse(res);
+	},
+
+	updateGroup: async (
+		conversationId: string,
+		data: { groupName?: string; groupAvatar?: string },
+		token: string
+	) => {
+		const res = await fetch(`${API_URL}/api/groups/${conversationId}`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify(data),
+		});
+		return handleResponse(res);
+	},
+
+	addGroupMember: async (
+		conversationId: string,
+		memberId: string,
+		token: string
+	) => {
+		const res = await fetch(`${API_URL}/api/groups/${conversationId}/members`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({ memberId }),
+		});
+		return handleResponse(res);
+	},
+
+	removeGroupMember: async (
+		conversationId: string,
+		memberId: string,
+		token: string
+	) => {
+		const res = await fetch(
+			`${API_URL}/api/groups/${conversationId}/members/${memberId}`,
+			{
+				method: "DELETE",
+				headers: { Authorization: `Bearer ${token}` },
+			}
+		);
+		return handleResponse(res);
+	},
+
+	makeGroupAdmin: async (
+		conversationId: string,
+		memberId: string,
+		token: string
+	) => {
+		const res = await fetch(
+			`${API_URL}/api/groups/${conversationId}/members/${memberId}/admin`,
+			{
+				method: "PATCH",
+				headers: { Authorization: `Bearer ${token}` },
+			}
+		);
+		return handleResponse(res);
+	},
+
+	leaveGroup: async (conversationId: string, token: string) => {
+		const res = await fetch(`${API_URL}/api/groups/${conversationId}/leave`, {
+			method: "POST",
+			headers: { Authorization: `Bearer ${token}` },
+		});
+		return handleResponse(res);
+	},
 };

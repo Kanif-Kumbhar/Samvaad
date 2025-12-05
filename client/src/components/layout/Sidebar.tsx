@@ -8,9 +8,17 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, LogOut, Settings, Search, X } from "lucide-react";
+import {
+	MessageCircle,
+	LogOut,
+	Settings,
+	Search,
+	X,
+	Users,
+} from "lucide-react";
 import UserSearch from "@/components/chat/UserSearch";
 import ChatItem from "@/components/chat/ChatItem";
+import CreateGroupDialog from "@/components/chat/CreateGroupDialog";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Sidebar() {
@@ -18,6 +26,7 @@ export default function Sidebar() {
 	const { conversations, setConversations } = useChatStore();
 	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
+	const [showCreateGroup, setShowCreateGroup] = useState(false);
 
 	useEffect(() => {
 		if (!token) return;
@@ -32,10 +41,22 @@ export default function Sidebar() {
 		router.replace("/login");
 	};
 
+	const handleGroupCreated = async () => {
+		if (!token) return;
+		const data = await api.getConversations(token);
+		setConversations(data.conversations || []);
+	};
+
 	const filteredConversations = conversations.filter((conv) => {
 		if (!searchQuery) return true;
 		const query = searchQuery.toLowerCase();
 
+		// For groups, search by group name
+		if (conv.isGroup) {
+			return conv.groupName?.toLowerCase().includes(query);
+		}
+
+		// For 1-on-1, search by username
 		const usernameMatch = conv.participants.some((p) =>
 			p.username.toLowerCase().includes(query)
 		);
@@ -76,7 +97,17 @@ export default function Sidebar() {
 					<Button
 						variant="ghost"
 						size="icon"
+						onClick={() => setShowCreateGroup(true)}
 						className="text-slate-400 hover:text-white hover:bg-slate-800/50 h-8 w-8"
+						title="Create Group"
+					>
+						<Users className="w-4 h-4" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="text-slate-400 hover:text-white hover:bg-slate-800/50 h-8 w-8"
+						title="Settings"
 					>
 						<Settings className="w-4 h-4" />
 					</Button>
@@ -85,6 +116,7 @@ export default function Sidebar() {
 						size="icon"
 						onClick={handleLogout}
 						className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 h-8 w-8"
+						title="Logout"
 					>
 						<LogOut className="w-4 h-4" />
 					</Button>
@@ -97,7 +129,7 @@ export default function Sidebar() {
 			</div>
 
 			{/* Search Chats */}
-			{/* <div className="px-3 py-3 border-b border-slate-800/50">
+			<div className="px-3 py-3 border-b border-slate-800/50">
 				<div className="relative">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
 					<Input
@@ -117,7 +149,7 @@ export default function Sidebar() {
 						</Button>
 					)}
 				</div>
-			</div> */}
+			</div>
 
 			{/* Conversations List */}
 			<div className="flex-1 overflow-y-auto custom-scrollbar px-2 py-2">
@@ -134,9 +166,17 @@ export default function Sidebar() {
 							<p className="text-sm text-slate-400 mb-2">
 								No conversations yet
 							</p>
-							<p className="text-xs text-slate-600">
-								Search for users to start chatting
+							<p className="text-xs text-slate-600 mb-4">
+								Search for users or create a group
 							</p>
+							<Button
+								size="sm"
+								onClick={() => setShowCreateGroup(true)}
+								className="bg-primary hover:bg-primary/90"
+							>
+								<Users className="w-4 h-4 mr-2" />
+								Create Group
+							</Button>
 						</motion.div>
 					) : filteredConversations.length === 0 ? (
 						<motion.div
@@ -210,6 +250,13 @@ export default function Sidebar() {
 				</div>
 				<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
 			</motion.div>
+
+			{/* Create Group Dialog */}
+			<CreateGroupDialog
+				open={showCreateGroup}
+				onOpenChange={setShowCreateGroup}
+				onSuccess={handleGroupCreated}
+			/>
 		</div>
 	);
 }

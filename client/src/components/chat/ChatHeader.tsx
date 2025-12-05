@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import { Conversation, User } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Phone, Video, MoreVertical, Pin, Archive, Trash2 } from "lucide-react";
+import {
+	Phone,
+	Video,
+	MoreVertical,
+	Pin,
+	Archive,
+	Trash2,
+	Users,
+	Settings as SettingsIcon,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSocket } from "@/lib/socket";
 import {
@@ -18,6 +27,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import GroupSettingsDialog from "./GroupSettingsDialog";
 
 export default function ChatHeader({
 	conversation,
@@ -27,7 +37,9 @@ export default function ChatHeader({
 	otherUser: User | null;
 }) {
 	const [otherUser, setOtherUser] = useState(initialUser);
-	const { token } = useAuthStore();
+	const [showGroupSettings, setShowGroupSettings] = useState(false);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const { token, user } = useAuthStore();
 	const { updateConversation } = useChatStore();
 	const router = useRouter();
 
@@ -72,6 +84,96 @@ export default function ChatHeader({
 		}
 	};
 
+	// For groups
+	if (conversation.isGroup) {
+		const participantCount = conversation.participants?.length || 0;
+
+		return (
+			<>
+				<motion.header
+					initial={{ y: -20, opacity: 0 }}
+					animate={{ y: 0, opacity: 1 }}
+					className="h-16 border-b border-slate-800/50 px-4 flex items-center justify-between bg-slate-900/80 backdrop-blur-xl relative z-20"
+				>
+					{/* Group Info */}
+					<div className="flex items-center gap-3">
+						<Avatar className="h-10 w-10 ring-2 ring-slate-700">
+							<AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white font-semibold">
+								<Users className="w-5 h-5" />
+							</AvatarFallback>
+						</Avatar>
+
+						<div className="flex flex-col">
+							<span className="text-sm font-semibold text-slate-100">
+								{conversation.groupName || "Group Chat"}
+							</span>
+							<span className="text-xs text-slate-500">
+								{participantCount} member{participantCount !== 1 ? "s" : ""}
+							</span>
+						</div>
+					</div>
+
+					{/* Action Buttons */}
+					<div className="flex items-center gap-2">
+						<Button
+							size="icon"
+							variant="ghost"
+							className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 h-9 w-9"
+						>
+							<Phone className="w-4 h-4" />
+						</Button>
+						<Button
+							size="icon"
+							variant="ghost"
+							className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 h-9 w-9"
+						>
+							<Video className="w-4 h-4" />
+						</Button>
+
+						{/* More Options Dropdown */}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									size="icon"
+									variant="ghost"
+									className="text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 h-9 w-9"
+								>
+									<MoreVertical className="w-4 h-4" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-48">
+								<DropdownMenuItem onClick={() => setShowGroupSettings(true)}>
+									<SettingsIcon className="w-4 h-4 mr-2" />
+									Group Settings
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={handleTogglePin}>
+									<Pin className="w-4 h-4 mr-2" />
+									{conversation.isPinned ? "Unpin" : "Pin"} Group
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={handleToggleArchive}>
+									<Archive className="w-4 h-4 mr-2" />
+									{conversation.isArchived ? "Unarchive" : "Archive"} Group
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem className="text-red-600">
+									<Trash2 className="w-4 h-4 mr-2" />
+									Leave Group
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+				</motion.header>
+
+				<GroupSettingsDialog
+					conversation={conversation}
+					open={showGroupSettings}
+					onOpenChange={setShowGroupSettings}
+				/>
+			</>
+		);
+	}
+
+	// For 1-on-1 chats (existing code)
 	if (!otherUser) return null;
 
 	return (
