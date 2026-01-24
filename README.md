@@ -1,23 +1,6 @@
 
-````markdown
-<div align="center">
-
 # 🗨️ Samvaad
 ### Real-time Chat Application Built with Next.js, Socket.io & PostgreSQL
-
-<div align="center">
-  <img src="./client/public/image.png" width="120" alt="Samvaad Logo" />
-</div>
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)]()
-[![Next.js](https://img.shields.io/badge/Next.js-14-black)]()
-[![Socket.io](https://img.shields.io/badge/Socket.io-4.0-green)]()
-[![Prisma](https://img.shields.io/badge/Prisma-5.0-lightblue)]()
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)]()
-
-</div>
-
----
 
 ## 📌 Overview
 **Samvaad** is a modern real-time messaging application supporting 1-1 chats, groups, media sharing, and online presence.  
@@ -191,4 +174,3 @@ MIT License
 <div align="center">
 Made with ❤️ — Star ⭐ the repo if you like it!
 </div>
-```
